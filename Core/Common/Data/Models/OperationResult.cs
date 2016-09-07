@@ -1,17 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Core.Common.Data.Models
 {
     /// <summary>
-    /// An OperationResult object is useful when you perform an operation and you need to return multiple  pieces of data from the operation
+    /// An OperationResult object is useful when you perform an operation and you need to return multiple pieces of data from the operation
     /// For example, you might need to return a list of errors that occur as part of invoking the operation. You could use this class when saving stuff into storage
-    /// either locally in a database or remotely in web service calls.
+    /// either locally in a database or remotely in web service calls. 
+    /// Inspired by Deborah Kurata (https://www.pluralsight.com/authors/deborah-kurata).
     /// </summary>
     public class OperationResult
     {
-        private ICollection<string> _messages;
-
-        private Dictionary<string, object> _messagesDictionary;
+        private List<string> _messages;
+        private Dictionary<string, object> _objectsDictionary;
 
         /// <summary>
         /// We initially set Success to True on construction because we are optimistic that the operation will succeed.  Always remember to set Success
@@ -20,6 +21,8 @@ namespace Core.Common.Data.Models
         public OperationResult()
         {
             Success = true;
+            _messages = new List<string>();
+            _objectsDictionary = new Dictionary<string, object>();
         }
 
         /// <summary>
@@ -34,32 +37,35 @@ namespace Core.Common.Data.Models
         /// before being displayed on the UI, for example, do not add stack traces here since they will reveal sensitive information about the underlying sysytem.
         /// Stack traces are useless to users as well.
         /// </summary>
-        public ICollection<string> Messages
-        {
-            get { return _messages ?? (_messages = new List<string>()); }
-            set { _messages = value; }
-        }
+        public IReadOnlyCollection<string> Messages => _messages.Any() ? new List<string>(_messages) : (_messages = new List<string>());
 
         /// <summary>
-        /// This dictionary is useful if you wnat to return some objects back to the calling client. For example, suppose we were persisting a new record into the 
-        /// database, we could add the entity which was just persisted into this dictionary should the client require it. e.g. 
-        ///  MessagesDictionary.Add("PersistedRecord", entity). The client would then have to cast it to the appropriate entity type when extracting it from the 
-        /// dictionary.
+        /// Adds a message to the list of messages to return back to the client.
         /// </summary>
-        public Dictionary<string, object> MessagesDictionary
-        {
-            get { return _messagesDictionary ?? (_messagesDictionary = new Dictionary<string, object>()); }
-            set { _messagesDictionary = value; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
+        /// <param name="message">The message to add</param>
         public void AddMessage(string message)
         {
             if (message == null) return;
-            Messages.Add(message);
+            _messages.Add(message);
+        }
+
+        /// <summary>
+        /// This dictionary is useful if you want to return some objects back to the calling client. For example, suppose we were persisting a new record into the 
+        /// database, we could add the entity which was just persisted into this dictionary should the client require it. e.g. 
+        ///  ObjectsDictionary.Add("PersistedRecord", entity). The client would then have to cast it to the appropriate entity type when extracting it from the 
+        /// dictionary.
+        /// </summary>
+        public IReadOnlyDictionary<string, object> ObjectsDictionary => _objectsDictionary ?? (_objectsDictionary = new Dictionary<string, object>());
+
+        /// <summary>
+        /// Adds an object to the object dictionary
+        /// </summary>
+        /// <param name="objectKey">The key for retrieving the object</param>
+        /// <param name="objectValue">The value of the object</param>
+        public void AddObjectToDictionary(string objectKey, object objectValue)
+        {
+            if (string.IsNullOrEmpty(objectKey) || objectValue == null) return;
+            _objectsDictionary.Add(objectKey, objectValue);
         }
     }
 }
