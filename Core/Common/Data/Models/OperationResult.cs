@@ -62,8 +62,8 @@ namespace Core.Common.Data.Models
         /// </summary>
         /// <param name="objectKey">The key for retrieving the object</param>
         /// <param name="objectValue">The value of the object</param>
-        public void AddObjectToDictionary(string objectKey, object objectValue)
-        {
+        public void AddResultObject(string objectKey, object objectValue)
+        {   
             if (string.IsNullOrEmpty(objectKey) || objectValue == null) return;
             _objectsDictionary.Add(objectKey, objectValue);
         }
