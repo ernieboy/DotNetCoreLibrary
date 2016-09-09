@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Core.Common.Data.Interfaces;
 using Core.Common.Extensions;
 using LinqKit;
+using System.Linq.Dynamic.Core;
 
 namespace Core.Common.Data.Repositories
 {
@@ -21,7 +22,7 @@ namespace Core.Common.Data.Repositories
         where TEntity : BaseObjectWithState, IObjectWithState, new()
         where TContext : DbContext, new()
     {
-        protected TContext Context; 
+        protected TContext Context;
 
         public short QueriesMaxTimeoutInSeconds { get; set; }
 
@@ -113,10 +114,27 @@ namespace Core.Common.Data.Repositories
             out int totalRecords,
             string sortColumn,
             string sortDirection,
-            ExpressionStarter<TEntity> searchPredicate) 
+            ExpressionStarter<TEntity> searchPredicate)
         {
-            totalRecords = 0;
-            return new List<TEntity>();
+
+            int pageIndex = pageNumber ?? 1;
+            int sizeOfPage = pageSize ?? 10;
+            if (pageIndex < 1) pageIndex = 1;
+            if (sizeOfPage < 1) sizeOfPage = 5;
+            int skipValue = (sizeOfPage * (pageIndex - 1));
+            var searchFilter = searchPredicate ?? BuildDefaultSearchFilterPredicate();
+
+            totalRecords =
+               Context.Set<TEntity>().AsExpandable().Where(searchFilter).OrderBy($"{sortColumn} {sortDirection}").Count();
+
+            var list =
+                Context.Set<TEntity>().AsExpandable()
+                    .Where(searchFilter)
+                    .OrderBy($"{sortColumn} {sortDirection}")
+                    .Skip(skipValue)
+                    .Take(sizeOfPage)
+                    .ToList();
+            return list;
         }
 
         /// <summary>
@@ -129,7 +147,7 @@ namespace Core.Common.Data.Repositories
         {
             Expression<Func<TEntity, bool>> filterExpression = a => true;
             ExpressionStarter<TEntity> predicate = PredicateBuilder.New(filterExpression);
-           return predicate;
+            return predicate;
         }
 
     }
