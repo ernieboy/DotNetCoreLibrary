@@ -4,7 +4,9 @@
     "debugType": "portable"
   },
   "dependencies": {
-    "Microsoft.EntityFrameworkCore.SqlServer": "1.0.0"
+    "Microsoft.EntityFrameworkCore.SqlServer": "1.0.0",
+    "System.Linq.Dynamic.Core": "1.0.5.4",
+    "LinqKit": "1.1.7.1"
   },
   "frameworks": {
     "netcoreapp1.0": {

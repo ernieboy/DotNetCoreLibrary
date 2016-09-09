@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Core.Common.Data.Models;
+using LinqKit;
 
 namespace Core.Common.Data.Interfaces
 {
@@ -53,16 +54,16 @@ namespace Core.Common.Data.Interfaces
         /// </summary>
         /// <returns>A collection of TEntity entities if found.</returns>
         Task<IEnumerable<TEntity>> FindAllEntitiesByPredicate(Expression<Func<TEntity, bool>> predicate);
-  
+
         /// <summary>
         ///  Returns a collection of TEntity entity in chunks. The client can also specify search and paging requirements criteria.
         /// </summary>
         /// <param name="pageNumber">The page number to return  when paging.</param>
         /// <param name="pageSize">The page size when paging.</param>
         /// <param name="totalRecords">The total number of records which were returned by the query criteria. Needed for displaying paging navigation links.</param>
-        /// <param name="keywords">An array of keywords for searching. Implementers can decide which columns in the underlying data store the search is perfromed against, but make sure that the searched data is indexed in order to speed up performance.</param>
         /// <param name="sortColumn">The sort column in the underlying data store. Should be indexed or performance could be severly reduced.</param>
         /// <param name="sortDirection">Either ASC or DESC.</param>
+        /// <param name="searchFilter">A predicate to search by</param>
         /// <returns>A collection of TEntity entities.</returns>
         IEnumerable<TEntity> FindAllEntitiesByCriteria(
             int? pageNumber,
@@ -70,6 +71,6 @@ namespace Core.Common.Data.Interfaces
             out int totalRecords,
             string sortColumn,
             string sortDirection,
-            params string[] keywords);
+            ExpressionStarter<TEntity> searchFilter);
     }
 }

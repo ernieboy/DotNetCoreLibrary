@@ -7,6 +7,7 @@ using Core.Common.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Core.Common.Data.Interfaces;
 using Core.Common.Extensions;
+using LinqKit;
 
 namespace Core.Common.Data.Repositories
 {
@@ -20,7 +21,7 @@ namespace Core.Common.Data.Repositories
         where TEntity : BaseObjectWithState, IObjectWithState, new()
         where TContext : DbContext, new()
     {
-        protected TContext _context;
+        protected TContext Context; 
 
         public short QueriesMaxTimeoutInSeconds { get; set; }
 
@@ -29,8 +30,8 @@ namespace Core.Common.Data.Repositories
         {
             entity.DateModified = DateTime.Now;
             AddOrUpdate(entity);
-            _context.ApplyStateChanges();
-            await _context.SaveChangesAsync();
+            Context.ApplyStateChanges();
+            await Context.SaveChangesAsync();
             entity.ObjectState = ObjectState.Unchanged;
             return true;
         }
@@ -43,13 +44,13 @@ namespace Core.Common.Data.Repositories
         public virtual async Task<TEntity> FindEntityByPredicate(
             Expression<Func<TEntity, bool>> predicate)
         {
-            return await _context.Set<TEntity>().SingleOrDefaultAsync(predicate);
+            return await Context.Set<TEntity>().SingleOrDefaultAsync(predicate);
         }
 
         public virtual async Task<IEnumerable<TEntity>> FindAllEntitiesByPredicate(
             Expression<Func<TEntity, bool>> predicate)
         {
-            return await Task.FromResult(_context.Set<TEntity>()
+            return await Task.FromResult(Context.Set<TEntity>()
             .Where(predicate).ToList());
         }
 
@@ -60,17 +61,17 @@ namespace Core.Common.Data.Repositories
 
         public async Task<IEnumerable<TEntity>> FindAllEntities()
         {
-            return await Task.FromResult(_context.Set<TEntity>().ToList());
+            return await Task.FromResult(Context.Set<TEntity>().ToList());
         }
 
         public IEnumerable<TEntity> FindAllEntitiesByCriteria(
             int? pageNumber, int? pageSize,
             out int totalRecords, string sortColumn,
-            string sortDirection, params string[] keywords)
+            string sortDirection, ExpressionStarter<TEntity> searchPredicate)
         {
             return FindAllByCriteria(
                 pageNumber, pageSize, out totalRecords,
-                 sortColumn, sortDirection, keywords);
+                 sortColumn, sortDirection, searchPredicate);
         }
 
 
@@ -80,30 +81,30 @@ namespace Core.Common.Data.Repositories
         {
             if (entity.Id == default(int) && entity.ObjectState == ObjectState.Added)
             {
-                _context.Add(entity);
+                Context.Add(entity);
             }
             else
             {
-                _context.Attach(entity);
+                Context.Attach(entity);
             }
         }
 
         protected virtual async Task<TEntity> FindSingleEntityById(int id)
         {
-            return await Task.FromResult(_context.Set<TEntity>()
+            return await Task.FromResult(Context.Set<TEntity>()
             .SingleOrDefault(x => x.Id == id));
         }
 
 
         protected virtual async Task<bool> SingleEntityExists(int entityId)
         {
-            return await Task.FromResult(_context.Set<TEntity>()
+            return await Task.FromResult(Context.Set<TEntity>()
             .Any(x => x.Id == entityId));
         }
 
         protected virtual async Task<IEnumerable<TEntity>> FindEntities()
         {
-            return await Task.FromResult(_context.Set<TEntity>().ToList());
+            return await Task.FromResult(Context.Set<TEntity>().ToList());
         }
 
         protected virtual IEnumerable<TEntity> FindAllByCriteria(
@@ -112,10 +113,23 @@ namespace Core.Common.Data.Repositories
             out int totalRecords,
             string sortColumn,
             string sortDirection,
-            params string[] keywords)
+            ExpressionStarter<TEntity> searchPredicate) 
         {
             totalRecords = 0;
             return new List<TEntity>();
+        }
+
+        /// <summary>
+        /// Default predicate for when the client did not provide a predicate for searching. 
+        /// In that case use this predicated since the search predicate is always required.
+        /// This predicate just return TRUE, which means NO filtering.
+        /// </summary>
+        /// <returns>An expression to use for filtering</returns>
+        protected virtual ExpressionStarter<TEntity> BuildDefaultSearchFilterPredicate()
+        {
+            Expression<Func<TEntity, bool>> filterExpression = a => true;
+            ExpressionStarter<TEntity> predicate = PredicateBuilder.New(filterExpression);
+           return predicate;
         }
 
     }
