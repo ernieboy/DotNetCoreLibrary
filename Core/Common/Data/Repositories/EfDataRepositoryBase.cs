@@ -108,8 +108,8 @@ namespace Core.Common.Data.Repositories
             var entityType = typeof(TEntity);
             // Find the first property of the entity that is decorated with the [Key] attribute. 
             // If there is one we assume it's being used instead of the defualt Id property
-            var keyMember = entityType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes<KeyAttribute>().Any());
-            if (keyMember == null)
+            PropertyInfo keyMember = entityType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes<KeyAttribute>().Any());
+            if (keyMember == null || (keyMember.PropertyType != typeof(long) && keyMember.PropertyType != typeof(int)))
             {
                 //Filter by the defualt Id column if there isn't any other property of the entity that is marked with the [Key] attribute. 
                 toReturn =  await Task.FromResult(Context.Set<TEntity>().SingleOrDefault(x => x.Id == id));
