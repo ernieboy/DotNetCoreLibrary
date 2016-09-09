@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Core.Common.Data.Interfaces;
 using Core.Common.Extensions;
 using LinqKit;
 using System.Linq.Dynamic.Core;
+using System.Reflection;
 
 namespace Core.Common.Data.Repositories
 {
@@ -92,8 +94,22 @@ namespace Core.Common.Data.Repositories
 
         protected virtual async Task<TEntity> FindSingleEntityById(int id)
         {
-            return await Task.FromResult(Context.Set<TEntity>()
-            .SingleOrDefault(x => x.Id == id));
+            var t = typeof(TEntity);
+            var keyMembers = t.GetProperties().Where(p => p.GetCustomAttributes<KeyAttribute>().Any()).ToList();
+            if (!keyMembers.Any())
+            {
+                return await Task.FromResult(Context.Set<TEntity>().SingleOrDefault(x => x.Id == id));
+            }
+            else
+            {
+                var member = keyMembers.First();
+                
+                 return await Task.FromResult(Context.Set<TEntity>().Where("x == y"));
+            }
+
+            return null;
+
+
         }
 
 
@@ -116,7 +132,6 @@ namespace Core.Common.Data.Repositories
             string sortDirection,
             ExpressionStarter<TEntity> searchPredicate)
         {
-
             int pageIndex = pageNumber ?? 1;
             int sizeOfPage = pageSize ?? 10;
             if (pageIndex < 1) pageIndex = 1;
@@ -125,7 +140,8 @@ namespace Core.Common.Data.Repositories
             var searchFilter = searchPredicate ?? BuildDefaultSearchFilterPredicate();
 
             totalRecords =
-               Context.Set<TEntity>().AsExpandable().Where(searchFilter).OrderBy($"{sortColumn} {sortDirection}").Count();
+               Context.Set<TEntity>().AsExpandable().Where(searchFilter)
+               .OrderBy($"{sortColumn} {sortDirection}").Count();
 
             var list =
                 Context.Set<TEntity>().AsExpandable()
