@@ -92,24 +92,36 @@ namespace Core.Common.Data.Repositories
             }
         }
 
+        /// <summary>
+        /// Finds a single entity by it's Primary Key. 
+        /// </summary>
+        /// <remarks>
+        /// In most situations the Id property of the entity class is the primary key. However, in some cases we might use the ClassName+Id as the PK 
+        /// e.g. CustomerId. In that case we have to use Reflection to inspect the entity's properties and find out if one of them has the [Key] attribute. If
+        /// so, we use that property as the PK. Otherwise we fall back to using Id as the PK. 
+        /// </remarks>
+        /// <param name="id"></param>
+        /// <returns>The entity if it exists in the db, otherwise null is returned.</returns>
         protected virtual async Task<TEntity> FindSingleEntityById(int id)
         {
-            var t = typeof(TEntity);
-            var keyMembers = t.GetProperties().Where(p => p.GetCustomAttributes<KeyAttribute>().Any()).ToList();
-            if (!keyMembers.Any())
+            TEntity toReturn;
+            var entityType = typeof(TEntity);
+            // Find the first property of the entity that is decorated with the [Key] attribute. 
+            // If there is one we assume it's being used instead of the defualt Id property
+            var keyMember = entityType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes<KeyAttribute>().Any());
+            if (keyMember == null)
             {
-                return await Task.FromResult(Context.Set<TEntity>().SingleOrDefault(x => x.Id == id));
+                //Filter by the defualt Id column if there isn't any other property of the entity that is marked with the [Key] attribute. 
+                toReturn =  await Task.FromResult(Context.Set<TEntity>().SingleOrDefault(x => x.Id == id));
             }
             else
             {
-                var member = keyMembers.First();
-                
-                 return await Task.FromResult(Context.Set<TEntity>().Where("x == y"));
+                // Use Dynamic Linq to filter by the the column that's decorated with [Key] attribute. 
+                // See http://weblogs.asp.net/scottgu/dynamic-linq-part-1-using-the-linq-dynamic-query-library 
+                string filter = $"{keyMember.Name}  = @0";
+                toReturn =  await Task.FromResult(Context.Set<TEntity>().FirstOrDefault(filter, id));
             }
-
-            return null;
-
-
+            return toReturn;
         }
 
 
