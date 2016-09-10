@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Core.Common.Data.Models;
 using LinqKit;
 
+
+// ReSharper disable once CheckNamespace
 namespace Core.Common.Data.Interfaces
 {
     public interface IDataRepository
@@ -35,13 +37,6 @@ namespace Core.Common.Data.Interfaces
         /// <param name="entityId">The ID of the entity to search for.</param>
         /// <returns>True if the entity was found, false otherwise.</returns>
         Task<bool> EntityExists(int entityId);
-
-        /// <summary>
-        /// Returns all entities of type TEntity from the repository. 
-        /// </summary>
-        /// <returns>A collection of T entities.</returns>
-        Task<IEnumerable<TEntity>> FindAllEntities();
-
 
         /// <summary>
         /// Returns entity of type TEntity from the repository based on predicate. 
