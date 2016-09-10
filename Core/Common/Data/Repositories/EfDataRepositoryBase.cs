@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -78,18 +79,34 @@ namespace Core.Common.Data.Repositories
         }
 
 
-        ///Note, if the PK of the entity you are persisting is not called Id then override this
-        // method in your own derived repository
+   
         protected virtual void AddOrUpdate(TEntity entity)
         {
             string keyColumnName;
+            bool entityIsNew = false;
 
-            if (!CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName))
+            //Handle case where the PK colulumn is NOT Id e.g it might be ProductId
+            if (CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName))
             {
+                Type constructedEntityType = entity.GetType();
+                PropertyInfo prop = constructedEntityType.GetProperty(keyColumnName);
+                object propValue = prop.GetValue(entity);
+                long propertyValue = long.Parse(propValue.ToString());
+                if (propertyValue == default(int) && entity.ObjectState == ObjectState.Added)
+                {
+                    entityIsNew = true;
+                }
+            }
+            else
+            {
+                //Handle case where the PK colulumn is Id 
+                if (entity.Id == default(int) && entity.ObjectState == ObjectState.Added)
+                {
+                    entityIsNew = true;
+                }
             }
 
-
-            if (entity.Id == default(int) && entity.ObjectState == ObjectState.Added)
+            if (entityIsNew)
             {
                 Context.Add(entity);
             }
@@ -113,10 +130,7 @@ namespace Core.Common.Data.Repositories
         {
             TEntity toReturn;
             string keyColumnName;
-            long propertyValue;
-
-
-            if (!CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName, out propertyValue))
+            if (!CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName))
             {
                 //Filter by the defualt Id column if there isn't any other property of the entity that is marked with the [Key] attribute. 
                 toReturn =  await Task.FromResult(Context.Set<TEntity>().SingleOrDefault(x => x.Id == id));
@@ -131,22 +145,22 @@ namespace Core.Common.Data.Repositories
             return toReturn;
         }
 
+
         /// <summary>
         /// Checks if the current entity has an integer column which is decorated with the [Key] attribute. 
         /// When that is the case we assume that the entity is using that column as the primary key instead if the default Id column 
         /// The property name is then assigned to the out param propertyName if found so that it can be returned back to the calling client.
-        /// The value of the property is also assigned to the out param propertyValue so that it can be returned back to the calling client.
         /// </summary>
         /// <param name="propertyName">The name of the first property which is marked with the [Key] attribute and is numeric</param>
-        /// <param name="propertyValue">The value of the property</param>
         /// <returns>True if the property is found.</returns>
-        private bool CurrentEntityHasIntPropertyWithKeyAttribute(out string propertyName, out long propertyValue)
+        private bool CurrentEntityHasIntPropertyWithKeyAttribute(out string propertyName)
         {
-            propertyName = string.Empty;
-            propertyValue = 0;
-            Type entityType = typeof(TEntity);
+            propertyName = string.Empty; 
+            var entityType = typeof(TEntity);
+
             // Find the first property of the entity that is decorated with the [Key] attribute. 
             PropertyInfo keyMember = entityType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes<KeyAttribute>().Any());
+
             if (keyMember == null) return false;
             //Make sure it's numeric
             if ((keyMember.PropertyType != typeof (long) && keyMember.PropertyType != typeof (int)))
@@ -154,7 +168,6 @@ namespace Core.Common.Data.Repositories
                 return false;
             }
             propertyName =  keyMember.Name;
-            propertyValue = long.Parse(keyMember.GetValue(propertyName).ToString());
             return true;
         }
 
