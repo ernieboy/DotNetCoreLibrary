@@ -83,7 +83,7 @@ namespace Core.Common.Data.Repositories
         protected virtual void AddOrUpdate(TEntity entity)
         {
             string keyColumnName;
-            bool entityIsNew = false;
+            bool entityIsNewToDb = false;
 
             //Handle case where the PK colulumn is NOT Id e.g it might be ProductId
             if (CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName))
@@ -94,7 +94,7 @@ namespace Core.Common.Data.Repositories
                 long propertyValue = long.Parse(propValue.ToString());
                 if (propertyValue == default(int) && entity.ObjectState == ObjectState.Added)
                 {
-                    entityIsNew = true;
+                    entityIsNewToDb = true;
                 }
             }
             else
@@ -102,11 +102,11 @@ namespace Core.Common.Data.Repositories
                 //Handle case where the PK colulumn is Id 
                 if (entity.Id == default(int) && entity.ObjectState == ObjectState.Added)
                 {
-                    entityIsNew = true;
+                    entityIsNewToDb = true;
                 }
             }
 
-            if (entityIsNew)
+            if (entityIsNewToDb)
             {
                 Context.Add(entity);
             }
