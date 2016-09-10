@@ -82,6 +82,13 @@ namespace Core.Common.Data.Repositories
         // method in your own derived repository
         protected virtual void AddOrUpdate(TEntity entity)
         {
+            string keyColumnName;
+
+            if (!CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName))
+            {
+            }
+
+
             if (entity.Id == default(int) && entity.ObjectState == ObjectState.Added)
             {
                 Context.Add(entity);
@@ -105,11 +112,11 @@ namespace Core.Common.Data.Repositories
         protected virtual async Task<TEntity> FindSingleEntityById(int id)
         {
             TEntity toReturn;
-            var entityType = typeof(TEntity);
-            // Find the first property of the entity that is decorated with the [Key] attribute. 
-            // If there is one we assume it's being used instead of the defualt Id property
-            PropertyInfo keyMember = entityType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes<KeyAttribute>().Any());
-            if (keyMember == null || (keyMember.PropertyType != typeof(long) && keyMember.PropertyType != typeof(int)))
+            string keyColumnName;
+            long propertyValue;
+
+
+            if (!CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName, out propertyValue))
             {
                 //Filter by the defualt Id column if there isn't any other property of the entity that is marked with the [Key] attribute. 
                 toReturn =  await Task.FromResult(Context.Set<TEntity>().SingleOrDefault(x => x.Id == id));
@@ -118,10 +125,37 @@ namespace Core.Common.Data.Repositories
             {
                 // Use Dynamic Linq to filter by the the column that's decorated with [Key] attribute. 
                 // See http://weblogs.asp.net/scottgu/dynamic-linq-part-1-using-the-linq-dynamic-query-library 
-                string filter = $"{keyMember.Name}  = @0";
+                string filter = $"{keyColumnName}  = @0";
                 toReturn =  await Task.FromResult(Context.Set<TEntity>().FirstOrDefault(filter, id));
             }
             return toReturn;
+        }
+
+        /// <summary>
+        /// Checks if the current entity has an integer column which is decorated with the [Key] attribute. 
+        /// When that is the case we assume that the entity is using that column as the primary key instead if the default Id column 
+        /// The property name is then assigned to the out param propertyName if found so that it can be returned back to the calling client.
+        /// The value of the property is also assigned to the out param propertyValue so that it can be returned back to the calling client.
+        /// </summary>
+        /// <param name="propertyName">The name of the first property which is marked with the [Key] attribute and is numeric</param>
+        /// <param name="propertyValue">The value of the property</param>
+        /// <returns>True if the property is found.</returns>
+        private bool CurrentEntityHasIntPropertyWithKeyAttribute(out string propertyName, out long propertyValue)
+        {
+            propertyName = string.Empty;
+            propertyValue = 0;
+            Type entityType = typeof(TEntity);
+            // Find the first property of the entity that is decorated with the [Key] attribute. 
+            PropertyInfo keyMember = entityType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes<KeyAttribute>().Any());
+            if (keyMember == null) return false;
+            //Make sure it's numeric
+            if ((keyMember.PropertyType != typeof (long) && keyMember.PropertyType != typeof (int)))
+            {
+                return false;
+            }
+            propertyName =  keyMember.Name;
+            propertyValue = long.Parse(keyMember.GetValue(propertyName).ToString());
+            return true;
         }
 
 
