@@ -12,7 +12,7 @@ namespace Core.Common.Data.Business
             int? pageNumber, int? pageSize, string sortCol,
             string sortDir, string searchTerms);
 
-        Task<TEntity> FindEntityById(int id);
+        Task<TEntity> FindEntityById(long id);
 
         Task<bool> PersistEntity(TEntity entity);
 

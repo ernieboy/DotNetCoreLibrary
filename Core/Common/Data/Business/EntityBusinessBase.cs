@@ -52,7 +52,7 @@ namespace Core.Common.Data.Business
             return result;
         }
 
-        public virtual async Task<TEntity> FindEntityById(int id)
+        public virtual async Task<TEntity> FindEntityById(long id)
         {
             var entity = await Repository.FindEntityById(id);
             return entity;

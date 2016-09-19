@@ -28,7 +28,7 @@ namespace Core.Common.Data.Interfaces
         /// </summary>
         /// <param name="id">The ID of the entity to search for.</param>
         /// <returns>The entity if found, it's up to the implementer what to return if the entity was not found. They can throw a NotFoundException if needed.</returns>
-        Task<TEntity> FindEntityById(int id);
+        Task<TEntity> FindEntityById(long id);
     
 
         /// <summary>

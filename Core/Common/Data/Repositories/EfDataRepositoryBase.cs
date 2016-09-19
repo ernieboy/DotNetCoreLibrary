@@ -52,7 +52,7 @@ namespace Core.Common.Data.Repositories
         /// </summary>
         /// <param name="id">The id of the entity to search for</param>
         /// <returns>The entity if found, null is returned if not found</returns>
-        public async Task<TEntity> FindEntityById(int id)
+        public async Task<TEntity> FindEntityById(long id)
         {
             return await FindSingleEntityById(id);
         }
@@ -170,7 +170,7 @@ namespace Core.Common.Data.Repositories
         /// </remarks>
         /// <param name="id">The Id of the entity we are looking for</param>
         /// <returns>The entity if it exists in the db, otherwise null is returned.</returns>
-        protected virtual async Task<TEntity> FindSingleEntityById(int id)
+        protected virtual async Task<TEntity> FindSingleEntityById(long id)
         {
             TEntity toReturn;
             string keyColumnName;
