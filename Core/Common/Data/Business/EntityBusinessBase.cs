@@ -7,11 +7,12 @@ using Core.Common.Extensions;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using DotNetCoreLibrary.Core.Common.Utilities;
 using LinqKit;
 
 namespace Core.Common.Data.Business
 {
-    public abstract class EntityBusinessBase<TEntity>
+    public abstract class EntityBusinessBase<TEntity> : IEntityBusiness<TEntity>
         where TEntity : BaseObjectWithState, IObjectWithState, new()
     {
         protected readonly IDataRepository<TEntity> Repository;
@@ -20,6 +21,37 @@ namespace Core.Common.Data.Business
         {
             Repository = repository;
         }
+
+        public virtual OperationResult ListItems(
+            int? pageNumber, int? pageSize, string sortCol, string sortDir, string searchTerms)
+        {
+            var result = new OperationResult();
+            sortCol = sortCol ?? "Name";
+            sortDir = sortDir ?? "ASC";
+
+            string[] searchKeywords = !searchTerms.IsNullOrWhiteSpace() ? searchTerms.Split(',') : new string[] { };
+            result.AddResultObject("keywords", searchKeywords);
+
+            int totalNumberOfRecords;
+            int totalNumberOfPages;
+            int offset;
+            int offsetUpperBound;
+
+            var list = FindAllEntitiesByCriteria(
+                        pageNumber,
+                         pageSize,
+                         out totalNumberOfRecords,
+                         sortCol,
+                        sortDir,
+                        out offset,
+                        out offsetUpperBound,
+                        out totalNumberOfPages,
+                        result,
+                        BuildSearchFilterPredicate(searchKeywords));
+            result.AddResultObject("list", list);
+            return result;
+        }
+
         public virtual async Task<TEntity> FindEntityById(int id)
         {
             var entity = await Repository.FindEntityById(id);
@@ -83,8 +115,16 @@ namespace Core.Common.Data.Business
         {
             Expression<Func<TEntity, bool>> filterExpression = a => true;
             ExpressionStarter<TEntity> predicate = PredicateBuilder.New(filterExpression);
-            
+
             return predicate;
+        }
+
+        public TDestination Map<TSource, TDestination>(TSource source)
+            where TSource : new() where TDestination : new()
+        {
+            TDestination toReturn = new SimpleObjectMapper<TSource, TDestination>()
+                .Map(source);
+            return toReturn;
         }
     }
 }
