@@ -11,6 +11,7 @@ using Core.Common.Extensions;
 using LinqKit;
 using System.Linq.Dynamic.Core;
 using System.Reflection;
+using Core.Common.Data.Exceptions;
 
 // ReSharper disable once CheckNamespace
 namespace Core.Common.Data.Repositories
@@ -48,6 +49,23 @@ namespace Core.Common.Data.Repositories
         }
 
         /// <summary>
+        /// Finds an entity from the database by Primary Key where the primary key is in string format
+        /// </summary>
+        /// <param name="id">The id of the entity to search for</param>
+        /// <returns>The entity if found, null is returned if not found</returns>
+        public async Task<TEntity> FindEntityByStringId(string id)
+        {
+            string keyColumnName;
+            if (!CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName))
+            {
+                throw new DataAccessException("Entity does not contain any property that is marked with the KEY attribute!");
+            }
+            string filter = $"{keyColumnName}  = @0";
+            var entity  = await Task.FromResult(Context.Set<TEntity>().FirstOrDefault(filter, id));
+            return entity;
+        }
+
+        /// <summary>
         /// Finds an entity from the database by Primary Key
         /// </summary>
         /// <param name="id">The id of the entity to search for</param>
@@ -56,7 +74,7 @@ namespace Core.Common.Data.Repositories
         {
             return await FindSingleEntityById(id);
         }
-
+        
         /// <summary>
         /// Finds an entity from the database by predicate
         /// </summary>
