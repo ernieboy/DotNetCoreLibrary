@@ -229,7 +229,12 @@ namespace Core.Common.Data.Repositories
 
             if (keyMember == null) return false;
             //Make sure it's numeric
-            if ((keyMember.PropertyType != typeof(long) && keyMember.PropertyType != typeof(int)))
+            if ((keyMember.PropertyType != typeof(long) &&
+                keyMember.PropertyType != typeof(int) &&
+                keyMember.PropertyType != typeof(string)
+                )
+
+                )
             {
                 return false;
             }
