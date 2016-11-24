@@ -12,6 +12,7 @@ using LinqKit;
 using System.Linq.Dynamic.Core;
 using System.Reflection;
 using Core.Common.Data.Exceptions;
+using Core.Common.Utilities;
 
 // ReSharper disable once CheckNamespace
 namespace Core.Common.Data.Repositories
@@ -55,13 +56,16 @@ namespace Core.Common.Data.Repositories
         /// <returns>The entity if found, null is returned if not found</returns>
         public async Task<TEntity> FindEntityByStringId(string id)
         {
+            if (id.IsNullOrWhiteSpace()) Error.ArgumentNull(id);
             string keyColumnName;
             if (!CurrentEntityHasIntPropertyWithKeyAttribute(out keyColumnName))
             {
                 throw new DataAccessException("Entity does not contain any property that is marked with the KEY attribute!");
             }
+            // Use Dynamic Linq to filter by the the column that's decorated with [Key] attribute. 
+            // See http://weblogs.asp.net/scottgu/dynamic-linq-part-1-using-the-linq-dynamic-query-library 
             string filter = $"{keyColumnName}  = @0";
-            var entity  = await Task.FromResult(Context.Set<TEntity>().FirstOrDefault(filter, id));
+            var entity = await Task.FromResult(Context.Set<TEntity>().FirstOrDefault(filter, id.Trim()));
             return entity;
         }
 
@@ -74,7 +78,7 @@ namespace Core.Common.Data.Repositories
         {
             return await FindSingleEntityById(id);
         }
-        
+
         /// <summary>
         /// Finds an entity from the database by predicate
         /// </summary>
