@@ -17,7 +17,7 @@ using Core.Common.Data.Exceptions;
 namespace Core.Common.Data.Repositories
 {
     /// <summary>
-    /// An Entity Framework base abastract class which implements the IDataRepository<TEntity/> interface. All repository classes which interact with EF
+    /// An Entity Framework base abstract class which implements the IDataRepository<TEntity/> interface. All repository classes which interact with EF
     ///  should extend this class and customise the already provided functionality, e.g. they should override all virtual methods to suite their needs if required.
     /// </summary>
     /// <typeparam name="TEntity">The actual entity type to save into the repository</typeparam>
