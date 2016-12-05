@@ -14,6 +14,8 @@ namespace Core.Common.Data.Business
 
         Task<TEntity> FindEntityById(long id);
 
+        Task<TEntity> FindEntityByStringId(string id);
+
         Task<bool> PersistEntity(TEntity entity);
 
         TDestination Map<TSource, TDestination>(TSource source)

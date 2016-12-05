@@ -58,6 +58,12 @@ namespace Core.Common.Data.Business
             return entity;
         }
 
+        public virtual async Task<TEntity> FindEntityByStringId(string id)
+        {
+            var entity = await Repository.FindEntityByStringId(id);
+            return entity;
+        }
+
         public virtual async Task<bool> PersistEntity(TEntity entity)
         {
             return await Repository.PersistEntity(entity);
