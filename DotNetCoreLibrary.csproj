@@ -1,19 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp1.1</TargetFramework>
-    <DebugType>portable</DebugType>
-    <AssemblyName>DotNetCoreLibrary</AssemblyName>
-    <PackageId>DotNetCoreLibrary</PackageId>
-    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
-    <RuntimeFrameworkVersion>1.0.4</RuntimeFrameworkVersion>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="1.0.3" />
-    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.0.5.4" />
-    <PackageReference Include="LinqKit" Version="1.1.7.1" />
-    <PackageReference Include="System.Linq" Version="4.1.0" />
+<ItemGroup>
+<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.0.0" />
+<PackageReference Include="System.Linq.Dynamic.Core" Version="1.0.7.6" />
+<PackageReference Include="LinqKit" Version="1.1.9" />
+<PackageReference Include="System.Linq" Version="4.3.0" />
   </ItemGroup>
-
 </Project>
+
+  
+
